@@ -3,25 +3,27 @@
 # https://developers.google.com/maps/documentation/places/web-service/search-nearby#maps_http_places_nearbysearch-py
 import googlemaps
 
-#注意! 這邊需要用自己的API key
+#這邊需要用自己的API key
 API_KEY = ""
 
 #創建一個文件，用來存放資料
 output = open("map data.txt", "w", encoding="UTF-8")
 
 #輸入關鍵詞
-key_word = input("請輸入關鍵詞")
+key_word = input("請輸入關鍵詞\n")
 #輸入地址
-address = input("請輸入地址")
+address = input("請輸入地址\n")
+#輸入範圍
+rad = input("請輸入範圍\n(以公尺計，預設可用2500)\n")
 
 #執行googlemaps套件，並確認地址是合法的
 gmaps = googlemaps.Client(key=API_KEY)
 try:
       geocode_result = gmaps.geocode(address)
       loc = geocode_result[0]["geometry"]["location"]
-      places = gmaps.places_nearby(keyword=key_word, location=loc, radius=2500)
+      places = gmaps.places_nearby(keyword=key_word, location=loc, radius=rad)
 except:
-      print("地址有問題喔")
+      print("輸入內容有問題喔")
       quit()
 
 
