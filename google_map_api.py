@@ -1,6 +1,8 @@
 # 說明文獻
 # https://googlemaps.github.io/google-maps-services-python/docs/
 # https://developers.google.com/maps/documentation/places/web-service/search-nearby#maps_http_places_nearbysearch-py
+# 如何申請google api 教學
+# https://www.letswrite.tw/google-map-api-marker-custom/#%E4%BA%8C%E3%80%81%E7%94%B3%E8%AB%8B-google-maps-api-key
 import googlemaps
 
 #這邊需要用自己的API key
