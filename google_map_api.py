@@ -3,8 +3,8 @@
 # https://developers.google.com/maps/documentation/places/web-service/search-nearby#maps_http_places_nearbysearch-py
 import googlemaps
 
-#這邊需要用自己的API key
-API_KEY = "AIzaSyDRkxJ8wlm3ixvqem0jUsCnTft7hQlySus"
+#注意! 這邊需要用自己的API key
+API_KEY = ""
 
 #創建一個文件，用來存放資料
 output = open("map data.txt", "w", encoding="UTF-8")
