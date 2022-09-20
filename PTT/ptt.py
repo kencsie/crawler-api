@@ -1,3 +1,4 @@
+#region 爬蟲部分
 # 403 Forbidden解決方法
 # https://blog.csdn.net/eric_sunah/article/details/11301873
 # try and except
@@ -20,12 +21,109 @@
 # Remote end closed connection without response 的解決方法與User-Agent文件
 # https://blog.csdn.net/ztf312/article/details/87919027
 # https://gist.github.com/pzb/b4b6f57144aea7827ae4
+#endregion
+#region Python 部分
+# class 的簡單介紹
+# https://www.learncodewithmike.com/2020/01/python-class.html
+# public & protected & private
+# https://www.tutorialsteacher.com/python/public-private-protected-modifiers
+#endregion
+#region Python 檔案管理部分
+# 不同作業系統路徑的不同
+# https://stackoverflow.com/questions/1589930
+# 檢查目錄存在
+# https://www.geeksforgeeks.org/python-check-if-a-file-or-directory-exists-2/
+# 目錄接合
+# https://www.geeksforgeeks.org/python-os-path-join-method/
+#endregion
 
 from urllib.request import urlopen
 from urllib.request import Request
 from random import randint
 from bs4 import BeautifulSoup
 import os
+
+class crawler_ptt:
+    def __init__(self):
+        print("歡迎來到PTT爬蟲系統, 開始初始化")
+        
+        try:
+            # 1-1.讀取並印出看板內容
+            file_input = open(os.path.join(self.__path, "billboard_list.txt"), "r", encoding="UTF-8")
+            counter = 1
+            print("以下為各個看板")
+            for line in file_input:
+                self.__billboard_type.append(line.rstrip('\n'))
+                print(counter, ":", line, sep="", end="")
+                counter += 1
+
+            # 1-2.選取看板內容
+            option = input("請選擇想要爬取的看板.\n(以數字選擇)\n")
+            self.__craw_url = "http://www.ptt.cc/bbs/" + self.__billboard_type[int(option)-1] + "/index.html"
+        
+        except FileNotFoundError:
+            print("看板文件找不到，請先下載後放置與程式相同資料夾內")
+            os._exit(0)
+        except IndexError:
+            print("此看板不存在")
+            os._exit(0)
+        finally:
+            file_input.close()
+
+
+        try:
+            #2-1.創建資料目錄
+            os.mkdir(self.__data_path)
+        except FileExistsError:
+            print("存儲資料目錄已創建，繼續...")
+        
+        try:
+            #2-2.創建看板目錄
+            self.__board_path = os.path.join(self.__data_path, self.__billboard_type[int(option)-1])
+            os.mkdir(self.__board_path)
+        except FileExistsError:
+            print(self.__billboard_type[int(option)-1],"看板已創建，繼續...", sep="")
+        
+        # 3.讀取並存入User-Agent文件
+        try:
+            file_input = open(os.path.join(self.__path, "user_agent_list.txt"), "r", encoding="UTF-8")
+            for line in file_input:
+                self.__USER_AGENTS.append(line.rstrip("\n"))
+        except FileNotFoundError:
+            print("User-Agent文件找不到, 請先下載後放置與程式相同資料夾內")
+            os._exit(0)
+        finally:
+            file_input.close()
+
+
+        # 4.填入抓取頁數
+        self.__page = input("請選擇爬取頁數.\n請適度擷取,避免造成站方負擔\n")
+        
+    def craw(self):
+        for i in range(int(self.__page)):
+            # 每次都會更新User-Agent，避免被判定非法存取
+            headers = {"User-Agent": self.__USER_AGENTS[randint(0, len(self.__USER_AGENTS)-1)] , "cookie": "over18=1"}
+            # 開始執行爬蟲
+            crawl_website(self.__craw_url, headers, self.__board_path)
+            # 替代上一頁的url
+            self.__craw_url = find_previous_website(self.__craw_url, headers)
+            print("已爬取第", i+1, "頁", sep="")
+
+
+    # 程式目前執行的位置
+    __path = os.path.dirname(os.path.abspath(__file__))
+    # 存儲資料的目錄
+    __data_path = os.path.join(__path, "Data")
+    # 爬取看板目錄
+    __board_path = ""
+    # 爬取頁數
+    __page = 0
+    # 爬取的網頁
+    __craw_url = ""
+    # User_agent 的 list
+    __USER_AGENTS = []
+    # 看板的 list
+    __billboard_type = []
 
 
 def find_previous_website(in_url, in_headers):
@@ -92,7 +190,7 @@ def crawl_website(in_url, in_headers, billboard_dir):
     for ele in data_set:
         #把日期分開，以避免非法字元(7/15 -> 715)
         split_date = ele[4][1:].split("/")
-        dir = billboard_dir + "\\" + split_date[0] + split_date[1]
+        dir = os.path.join(billboard_dir, split_date[0] + split_date[1])
         try:
             #創建目錄
             os.mkdir(dir)
@@ -105,7 +203,7 @@ def crawl_website(in_url, in_headers, billboard_dir):
             ele[1] = ele[1].replace(ch, '')
 
         #將標題儲存在檔案內 
-        out = open(dir+"\\"+ele[1]+".txt", "w", encoding="UTF-8")
+        out = open(os.path.join(dir, ele[1]+".txt"), "w", encoding="UTF-8")
         print("Vote:", ele[0], file=out, sep="")
         print("Title:", ele[1], file=out, sep="")
         print("Hyperlink:", ele[2], file=out, sep="")
@@ -125,69 +223,5 @@ def crawl_website(in_url, in_headers, billboard_dir):
             pass
 
 
-# 程式目前執行的位置
-program_path = os.path.dirname(os.path.abspath(__file__)) + "\\"
-# 存儲資料的目錄
-craw_data_path = program_path + "Data\\"
-
-# 讀取看板內容
-billboard_type = []
-try:
-    file_input = open(program_path + "billboard_list.txt", "r", encoding="UTF-8")
-    for line in file_input:
-        billboard_type.append(line.rstrip('\n'))
-except:
-    print("看板文件找不到，請先下載後放置與程式相同資料夾內")
-    os._exit(0)
-finally:
-    file_input.close()
-
-# 填入抓取看板
-counter = 1
-for item in billboard_type:
-    print(counter, ":", item, sep="")
-    counter += 1
-option = input("請選擇想要爬取的看板.\n(以數字選擇)\n")
-
-try:
-    url = "http://www.ptt.cc/bbs/" + billboard_type[int(option)-1] + "/index.html"
-except:
-    # 超過index的數量
-    print("此看板不存在")
-    os._exit(0)
-
-# 創建存儲資料目錄
-try:
-    os.mkdir(craw_data_path)
-except:
-    print("存儲資料目錄已創建，繼續...")
-
-# 創建該看板目錄
-billboard_dir = craw_data_path + billboard_type[int(option)-1]
-try:
-    os.mkdir(billboard_dir)
-except:
-    print(billboard_type[int(option)-1],"看板已創建，繼續...", sep="")
-
-# 填入抓取頁數
-page = input("請選擇爬取頁數.\n請適度擷取,避免造成站方負擔\n")
-
-# 讀取User-Agent文件
-USER_AGENTS = []
-try:
-    file_input = open(program_path + "user_agent_list.txt", "r", encoding="UTF-8")
-    for line in file_input:
-        USER_AGENTS.append(line.rstrip("\n"))
-except:
-    print("User-Agent文件找不到，請先下載後放置與程式相同資料夾內")
-    os._exit(0)
-finally:
-    file_input.close()
-
-for i in range(int(page)):
-    # 每次都會更新User-Agent，避免被判定非法存取
-    headers = {"User-Agent": USER_AGENTS[randint(0, len(USER_AGENTS)-1)] , "cookie": "over18=1"}
-    # 開始執行爬蟲
-    crawl_website(url, headers, billboard_dir)
-    # 替代上一頁的url
-    url = find_previous_website(url, headers)
+ptt = crawler_ptt()
+ptt.craw()
